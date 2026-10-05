@@ -4,9 +4,9 @@
  * holds the opt-out, the random id every event from this machine is
  * attributed to, and which notice was shown when. Nothing in it names the
  * person or the machine: the id is random bytes, generated here and never
- * derived. It also keeps a random salt this version no longer reads: older
- * versions hashed paths with it and replace the id of a file without one,
- * and a machine often has several versions installed.
+ * derived. A complete file also holds a random salt that nothing is hashed
+ * with anymore: older versions hashed paths with it and replace the id of a
+ * file without one, and a machine often has several versions installed.
  *
  * The store fails closed. `open` completes the file in one write when the id
  * or the salt is missing, and when that write cannot happen there is no
