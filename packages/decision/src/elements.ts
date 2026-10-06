@@ -15,6 +15,7 @@ export interface Element {
   readonly value?: string;
   readonly checked?: boolean;
   readonly expanded?: boolean;
+  readonly selected?: boolean;
   readonly operations: readonly Operation[];
 }
 
@@ -161,6 +162,7 @@ export function actionSpace(ctx: StepExecutorContext, observation: SpaceObservat
       ...(row.node.value === undefined ? {} : { value: row.node.value }),
       ...(row.node.states?.checked === undefined ? {} : { checked: row.node.states.checked }),
       ...(row.node.states?.expanded === undefined ? {} : { expanded: row.node.states.expanded }),
+      ...(row.node.states?.selected === undefined ? {} : { selected: row.node.states.selected }),
       operations: row.operations,
     };
   });

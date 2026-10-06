@@ -32,6 +32,16 @@ describe('element table', () => {
     expect([...(space.targets.get('check')?.keys() ?? [])]).toEqual(['1', '2', '3']);
     expect(space.elements[0]).toMatchObject({ checked: false, operations: ['check'] });
   });
+  it('shows the selected state of a tab, so the model can tell which one is active', () => {
+    const space = spaceFor([
+      { id: 'a', role: 'tab', name: 'Profile', states: { selected: true } },
+      { id: 'b', role: 'tab', name: 'Settings', states: { selected: false } },
+    ]);
+    expect(space.elements).toMatchObject([
+      { label: 'Profile', selected: true },
+      { label: 'Settings', selected: false },
+    ]);
+  });
   it('never offers check on a checked radio, which would uncheck it', () => {
     const space = spaceFor([
       { id: 'on', role: 'radio', name: 'Express', states: { checked: true } },

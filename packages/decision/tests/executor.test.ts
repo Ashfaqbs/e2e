@@ -630,6 +630,23 @@ describe('context', () => {
     ]);
     expect(fixture.actions.check).toHaveBeenCalledWith({ id: 'dog' }, true);
   });
+  it('shows selected state in tap target criteria, so the model can tell which tab is active', async () => {
+    const tree: ExecutorNode = { id: 'root', children: [
+      { id: 'profile', role: 'tab', name: 'Profile', states: { selected: true } },
+      { id: 'settings', role: 'tab', name: 'Settings', states: { selected: false } },
+    ] };
+    const { model, requests } = scriptedEvaluation((id, keys, call) => ({
+      choice: id === 'operation' ? (call === 0 ? 'tap' : 'done') : id === 'verdict' ? 'holds' : (keys[1] ?? ''),
+    }));
+    const fixture = context({ tree });
+    await decisionExecutor({ model }).runStep(fixture.ctx);
+    const criteria = requests[0]?.questions['tap_target']?.criteria as Record<string, unknown>;
+    expect(Object.values(criteria)).toEqual([
+      { element: 'Profile', role: 'tab', selected: true },
+      { element: 'Settings', role: 'tab', selected: false },
+    ]);
+    expect(fixture.actions.tap).toHaveBeenCalledWith({ id: 'settings' });
+  });
   it('rejects an undeclared secret name', async () => {
     const login: ExecutorNode = { id: 'root', children: [{ id: 'pw', role: 'textbox', name: 'Password', inputPurpose: 'password' }] };
     const { model } = scriptedEvaluation((id, keys) => {

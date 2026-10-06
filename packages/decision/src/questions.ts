@@ -124,6 +124,7 @@ function targetCriterion(element: Element): Record<string, JsonValue> {
     role: element.role,
     ...(element.value === undefined ? {} : { value: element.value }),
     ...(element.checked === undefined ? {} : { checked: element.checked }),
+    ...(element.selected === undefined ? {} : { selected: element.selected }),
   };
 }
 /** The step params minus secret projections, which travel only as handles. */
@@ -190,6 +191,7 @@ export function elementRecords(space: ActionSpace): Record<string, JsonValue>[] 
     ...(element.value === undefined ? {} : { value: element.value }),
     ...(element.checked === undefined ? {} : { checked: element.checked }),
     ...(element.expanded === undefined ? {} : { expanded: element.expanded }),
+    ...(element.selected === undefined ? {} : { selected: element.selected }),
     operations: [...element.operations],
   }));
 }
