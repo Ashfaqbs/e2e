@@ -85,6 +85,20 @@ suites that consume the built packages the way a user would.
   hosted iOS simulators and Android emulators for the mobile engine
   (`DeviceProvider`). Expo publishes no SDK for the sessions API, so it calls
   Expo's GraphQL API with `fetch`, and `@e2e-dev/mobile` is its only peer.
+- `packages/smol` - the published `@e2e-dev/smol` package: Chromium in
+  smol machines microVMs on the runner's own computer for the web engine
+  (`BrowserProvider`), through the `smolmachines` SDK's embedded engine
+  (peer). Each worker slot boots one warm browser machine from the pinned
+  Playwright Ubuntu image; a Node TCP relay exposes DevTools, and SDK agent
+  readiness allows machine startup without waiting for published ports. In
+  `attempt` scope every attempt runs in a copy-on-write branch. With `app`,
+  the app under test runs in the same machine, so a branch also copies its
+  running app and data on the machine. When maintaining this integration,
+  update the provider's SDK dev dependency to a published version and raise
+  its peer minimum only if the provider needs new SDK behavior. Keep the
+  Playwright image and Chromium version in sync with `@e2e-dev/web`. Run
+  `pnpm --filter @e2e-dev/smol test:unit` and `pnpm check`, then verify live
+  machines in both attempt and worker scopes with an app running in the VM.
 - `packages/decision` — the published `@e2e-dev/decision` package: a
   `StepExecutor` (`decisionExecutor()`) that drives `agent.act` and
   `agent.assert` through an AI SDK *decision* model answering `choice`
