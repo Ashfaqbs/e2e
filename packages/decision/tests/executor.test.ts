@@ -702,7 +702,7 @@ describe('context', () => {
       { id: 'profile', role: 'tab', name: 'Profile', states: { selected: true } },
       { id: 'settings', role: 'tab', name: 'Settings', states: { selected: false } },
     ] };
-    const { model, requests } = scriptedEvaluation((id, keys, call) => ({
+    const { model, requests } = scriptedDecision((id, keys, call) => ({
       choice: id === 'operation' ? (call === 0 ? 'tap' : 'done') : id === 'verdict' ? 'holds' : (keys[1] ?? ''),
     }));
     const fixture = context({ tree });
