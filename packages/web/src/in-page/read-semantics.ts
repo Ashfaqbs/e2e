@@ -241,7 +241,19 @@ export const readSemanticsFunction = <Mode extends SemanticMode>(
       }
       case 'th': {
         const scope = (el.getAttribute('scope') ?? '').toLowerCase();
-        return scope === 'row' || scope === 'rowgroup' ? 'rowheader' : 'columnheader';
+        if (scope === 'row' || scope === 'rowgroup') return 'rowheader';
+        if (scope === 'col' || scope === 'colgroup') return 'columnheader';
+        const previous = el.previousElementSibling;
+        const next = el.nextElementSibling;
+        if (previous === null && next === null) {
+          const row = el.parentElement;
+          const table = row?.tagName.toLowerCase() === 'tr' ? row.closest('table') : null;
+          return table !== null && (table as HTMLTableElement).rows.length <= 1 ? null : 'columnheader';
+        }
+        if (previous?.tagName.toLowerCase() === 'th' && next?.tagName.toLowerCase() === 'th') return 'columnheader';
+        const hasDataNeighbor = [previous, next].some((cell) =>
+          cell?.tagName.toLowerCase() === 'td' && ((cell.textContent ?? '').trim() !== '' || cell.children.length > 0));
+        return hasDataNeighbor ? 'rowheader' : 'columnheader';
       }
       case 'dialog':
         return 'dialog';
@@ -396,7 +408,7 @@ export const readSemanticsFunction = <Mode extends SemanticMode>(
 
   /** True for a subtree the name computation drops: aria-hidden, or hidden by style as innerText leaves it out. */
   const isNameHidden = (el: Element, style: CSSStyleDeclaration | undefined): boolean =>
-    el.getAttribute('aria-hidden') === 'true' ||
+    (el.getAttribute('aria-hidden') ?? '').toLowerCase() === 'true' ||
     (style !== undefined && (style.display === 'none' || style.visibility === 'hidden'));
 
   /** `alt` of an element HTML-AAM names by it: an `<img>` or an `<input type="image">`. */
@@ -430,7 +442,7 @@ export const readSemanticsFunction = <Mode extends SemanticMode>(
    * under an `aria-hidden` ancestor, which excludes it from the tree as
    * surely as its own attribute would.
    */
-  const isReferenceHidden = (el: Element): boolean => isHidden(el) || el.closest('[aria-hidden="true"]') !== null;
+  const isReferenceHidden = (el: Element): boolean => isHidden(el) || el.closest('[aria-hidden="true" i]') !== null;
 
   /**
    * The element an id names for `el`, looked up in `el`'s own tree: an IDREF
@@ -904,7 +916,7 @@ export const readSemanticsFunction = <Mode extends SemanticMode>(
    * unlisted.
    */
   const hidesSubtree = (el: Element, style: CSSStyleDeclaration | undefined): boolean =>
-    el.getAttribute('aria-hidden') === 'true' ||
+    (el.getAttribute('aria-hidden') ?? '').toLowerCase() === 'true' ||
     isInert(el, style) ||
     style === undefined ||
     style.display === 'none' ||
@@ -1177,7 +1189,7 @@ export const readSemanticsFunction = <Mode extends SemanticMode>(
     }
     if (selectedState === null) {
       const ariaSelected = el.getAttribute('aria-selected');
-      if (ariaSelected !== null) selectedState = ariaSelected === 'true';
+      if (ariaSelected !== null) selectedState = ariaSelected.toLowerCase() === 'true';
     }
 
     const disabled = isDisabled(el);

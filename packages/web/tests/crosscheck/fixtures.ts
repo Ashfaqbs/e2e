@@ -12,6 +12,28 @@ export interface FixturePage {
 
 export const FIXTURE_PAGES: readonly FixturePage[] = [
   {
+    name: 'inferred table headers',
+    html: `
+      <table><tr><th>Item</th><td>Value</td></tr></table>
+      <table><tr><td>Value</td><th>Last item</th></tr></table>
+      <table><tr><th>Column</th><th>Other column</th></tr></table>
+      <table><tr><th scope="col">Explicit column</th><td>Value</td></tr></table>
+      <table><tr><th scope="row">Explicit row</th><th>Column</th></tr></table>
+    `,
+  },
+  {
+    name: 'boolean attribute casing',
+    html: `
+      <div role="tablist"><button role="tab" aria-selected="TRUE">All</button><button role="tab" aria-selected="TrUe">Recent</button><button role="tab" aria-selected="FALSE">Archived</button></div>
+      <div aria-hidden="TRUE"><button aria-hidden="false">Hidden action</button></div>
+      <button>Save<span aria-hidden="TrUe"> decoration</span></button>
+      <button aria-hidden="FALSE">Shown</button>
+      <button aria-labelledby="upper-reference">Fallback</button>
+      <div aria-hidden="TRUE"><span id="upper-reference">Label <i style="display:none">whole</i></span></div>
+      <div role="button">Pick <div role="listbox"><div role="option" aria-selected="true">Chosen</div><div role="option" aria-selected="false">Other</div></div></div>
+    `,
+  },
+  {
     name: 'inputs',
     html: `
       <label>Full name <input type="text"></label>

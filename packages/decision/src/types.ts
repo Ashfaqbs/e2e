@@ -1,15 +1,14 @@
-import type { Experimental_EvaluationModelV4 } from '@ai-sdk/provider';
-import type { LanguageModel } from 'ai';
+import type { experimental_decide, Experimental_DecisionModel, LanguageModel } from 'ai';
 
 /** Options for an executor that acts through a decision model and writes field text with a language model. */
 export interface DecisionExecutorOptions {
   /**
-   * An AI SDK evaluation model that answers `choice` questions with a
-   * probability distribution, e.g. `typeSafeAi.evaluationModel('jev-latest')`.
-   * Models that answer without `probabilities` fail the step with
-   * MODEL_OUTPUT_INVALID.
+   * An AI SDK decision model that answers `choice` questions with a
+   * probability distribution, e.g. `typeSafeAi.decisionModel('jev-latest')`.
+   * Evaluation models (`evaluationModel()`) work too. Models that answer
+   * without `probabilities` fail the step with MODEL_OUTPUT_INVALID.
    */
-  readonly model: Experimental_EvaluationModelV4;
+  readonly model: Exclude<Experimental_DecisionModel, string>;
   /**
    * A small AI SDK language model that writes field values when the
    * decision model picks `type`. It is exposed as the executor's `model`, so
@@ -22,4 +21,11 @@ export interface DecisionExecutorOptions {
   readonly minProbability?: number;
   /** Minimum provider-reported confidence. Default 0 (off). A model that reports none counts as 0. */
   readonly minConfidence?: number;
+  /**
+   * Provider options sent with every decide call, such as
+   * `{ gateway: { zeroDataRetention: true } }` for Vercel AI Gateway. They reach
+   * the decision model only: the text model keeps the agents entry's
+   * `providerOptions`, so options meant for one model never reach the other.
+   */
+  readonly providerOptions?: Parameters<typeof experimental_decide>[0]['providerOptions'];
 }
