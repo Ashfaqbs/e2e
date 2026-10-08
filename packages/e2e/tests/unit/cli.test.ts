@@ -543,6 +543,7 @@ describe('e2e --version and --help', () => {
       '--repeat-each',
       '--no-cache',
       '--strict-cache',
+      '-u',
       '--reporter',
       '--output',
       '--debug',
