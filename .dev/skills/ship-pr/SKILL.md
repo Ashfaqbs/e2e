@@ -17,6 +17,12 @@ of skipping it quietly.
 
 ## 1. Checks
 
+**Important:** first run the shortening pass from
+[authoring-docs](../authoring-docs/SKILL.md#important-shorten-every-page) on
+every guide page the change touches (`docs/**/*.mdx` outside
+`docs/reference/`), even for a one-paragraph edit. The checks below then
+catch an anchor the pass broke.
+
 Run what CI runs for what you touched, and fix everything:
 
 ```bash

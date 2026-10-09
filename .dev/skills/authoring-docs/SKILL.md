@@ -1,6 +1,6 @@
 ---
 name: authoring-docs
-description: Use when writing, editing, or rewriting a guide page on the docs site (docs/**/*.mdx outside docs/reference/), including cleanup passes on legacy pages.
+description: Use when writing, editing, rewriting, or shortening a guide page on the docs site (docs/**/*.mdx outside docs/reference/), including cleanup passes on legacy pages and requests to make a page shorter.
 metadata:
   internal: true
 ---
@@ -13,6 +13,88 @@ fast path first and fold everything else.
 
 Model pages: `docs/bug-bash.mdx` and `docs/quickstart.mdx`. When in doubt,
 copy their shape.
+
+## IMPORTANT: shorten every page
+
+**Run this pass on every page you write, edit, or rewrite, before you
+commit. Don't skip it for a new page or a small edit.** A first draft is
+always too long, and an edit that adds one paragraph often repeats a fact
+the page already has.
+
+When the PR is about something other than docs, such as a flag rename that
+updates three pages, apply the cuts to the sections the change touches.
+List the cuts for the rest of each page as a follow-up. A whole-page
+restructure is its own PR, one page per PR.
+
+A page is too long when it says a fact twice, or when it is much longer
+than its sidebar neighbors for no reason. Measure first. Count source lines
+and prose words, and compare the page with its siblings:
+
+````bash
+wc -l docs/integrations/*.mdx
+awk '/^```/{c=!c;next} !c' docs/integrations/smol.mdx | wc -w   # prose, roughly
+````
+
+The word count is approximate. It misses indented fences and counts
+frontmatter and JSX, so compare counts only between versions of one page.
+
+List every section with its rough line count. Then sort each cut into one
+of three kinds, and work them in this order.
+
+1. **Cut what the reader doesn't act on.**
+   - How the code works inside, such as the order a provider boots
+     machines. Keep the behavior a user sees, as one sentence where it
+     matters.
+   - An agent prompt that [Copy agent prompt](#copy-agent-prompt) says to
+     skip.
+   - Next cards the reader doesn't need next, down to the skeleton's
+     minimum of two.
+
+   Keep a guarantee the reader would otherwise doubt, even when it reads
+   like "works as it does locally". Check whether another page says it can
+   fail. `browser.mdx` says a provider without `downloads` fails, so a
+   provider page keeps the line that downloads work.
+2. **Merge what's said twice.** Each fact has one place.
+   - A lede paragraph that previews a section becomes a link to it.
+   - A "Before you start" whose items fit in two short sentences becomes a
+     `Note` in the first task. Keep the section when its items need
+     bullets, as in `docs/bug-bash.mdx`.
+   - A section that explains one option moves under the config that sets
+     it.
+   - A list and a table that describe the same fields become one table,
+     with the details in its cells.
+   - An options table row for an option with its own section links there.
+     It doesn't describe the option again.
+   - A list of limits or caveats copied from another page becomes a link
+     to the page that owns it.
+3. **Fold what only some readers need.** An optional path with its own
+   install and example goes into an `Accordion`. The visible text keeps the
+   rule every reader must follow.
+
+Write the target outline before you edit: the headings, and what each one
+holds. List moves that change other pages separately from the cuts on this
+page, and say if you recommend them.
+
+When the user asks how to shorten a page, show the plan before you edit.
+Group the items by kind. Give each item its rough savings in lines and one
+sentence of reason. End with the target outline and your recommendation.
+If an earlier pass of yours added the length, say so.
+
+Shortening adds claims. Check each new sentence:
+
+- **A caveat moves with its claim.** Cut "external state stays shared" from
+  the lede, and "every retry starts from the same state" becomes a promise
+  the code doesn't keep.
+- **A sentence that replaces three is a new claim.** Check it against
+  `src/`. "`workers` sets how many machines run" was wrong: in `'attempt'`
+  scope each worker slot runs a warm machine and a branch.
+- **A leftover fact gets a heading or gets cut.** Don't park it under the
+  nearest heading, such as cleanup under "Options". The heading list must
+  still lead to it.
+- **Every cut fact is cut on purpose.** Name each one, with its reason, in
+  the PR body.
+- **Estimates run high.** Measure after the edit, with the same commands.
+  Report the real line and word counts, before and after.
 
 ## Scope
 
@@ -109,7 +191,8 @@ color, size, and weight.
 
 Put a copyable prompt near the top when a coding agent can do the whole
 task from the page: setup, migration, a bug bash, wiring CI. Skip it when
-the page explains a concept or the task is one command.
+the page explains a concept, or the task is one command or one install and
+a config change.
 
 The import path is relative to the page. Use `./snippets/` for a top-level
 page and `../snippets/` for a page in `docs/ci/`, `docs/integrations/`, or
@@ -248,19 +331,27 @@ every repetition.
    `Accordion`, alternatives into `Tabs`, background procedures into
    `ShowMore`.
 6. **Apply the tone rules** sentence by sentence, then run `unslop`.
-7. **Add a copy agent prompt** if an agent can now do the whole task.
+7. **Add a copy agent prompt** if an agent can now do the whole task and
+   [Copy agent prompt](#copy-agent-prompt) doesn't say to skip it.
 8. **Keep URLs and anchors stable.** When you rename a heading, update
    every link to its anchor. Search for `/<page>#<anchor>` across `docs/`,
    `skills/`, `README.md`, and `packages/*/src`. Also search the page itself
    for `](#<anchor>)` and `href="#<anchor>"`. If a page moves, add a
    redirect in `docs/docs.json`.
-9. **Compare.** The new page is shorter on screen, and every fact from
-   step 1 is still on it, folded, or linked.
+9. **Shorten.** A page in the right shape can still say things twice. Run
+   the pass in
+   [IMPORTANT: shorten every page](#important-shorten-every-page).
+10. **Compare.** The new page is shorter on screen. Every fact from step 1
+    is still on it, folded, or linked, or it was cut on purpose and the PR
+    body names it with the reason.
 
 One page per PR. The reviewer compares old and new side by side.
 
 ## Before you commit
 
+- [ ] **IMPORTANT:** the shortening pass ran on this page. It was measured
+      against its neighbors before and after, and every new or merged
+      sentence was checked against `src/`.
 - [ ] Reading only the headings and first sentences explains the page.
 - [ ] The lede defines the thing in its first sentence.
 - [ ] The first task section is the fast path most readers came for,
