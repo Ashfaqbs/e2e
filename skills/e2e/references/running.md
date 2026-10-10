@@ -38,6 +38,7 @@ npx e2e telemetry [disable|enable] # anonymous usage telemetry: status or switch
 | `--output <dir>` | Results directory, over the config's `output` (default `.e2e`). |
 | `--no-cache` | Replay cache off for this run. |
 | `--strict-cache` | Fail a step whose committed recording no longer replays (`REPLAY_STALE`, exit 2) instead of handing it to the agent; retries replay too, and the run never writes the cache. |
+| `-u`, `--update-snapshots` | Write the stored screenshots `toHaveScreenshot` finds missing or different, and pass. |
 | `--pass-with-no-tests` | Exit 0, not `NO_TESTS`, when nothing matches. |
 | `--debug` | Phase timings and an agent step table on stderr; transcripts as artifacts. |
 | `--ai-trace` | Every model call, to `<output>/ai-trace.json`. |
@@ -58,7 +59,11 @@ CI=1 npx e2e run            # the CI defaults, locally
 `--last-failed`, `--shard`, `--pass-with-no-tests`), prints one line per
 test-target pair, `file › title [target] #tag`, skipped pairs ending in
 ` (skipped: <reason>)`, and starts no app, engine, or worker.
-`--reporter json` prints `{ "pairs": [...] }`.
+`--reporter json` prints `{ "pairs": [...] }` and names a skip reason `reason`.
+
+`import { list } from 'e2e/runner'` returns that selection plus the pairs a
+filter removed, positional arguments that matched no file, and the selected
+target names.
 
 ```bash
 npx e2e list tests/signup.e2e.ts --tag smoke --reporter json

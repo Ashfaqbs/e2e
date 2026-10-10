@@ -8,7 +8,8 @@ import { detectPackageManager, execCommand, runScriptCommand } from '../internal
 import { packageVersion } from '../internal/package-version.ts';
 import { classifyError, exitCodeForCategory } from '../internal/errors.ts';
 import type { Shard, TagMode } from '../collect/select.ts';
-import { list, run, type ListedPair, type RunOptions, type RunOutcome } from '../run/runner.ts';
+import { list, type ListedPair } from '../runner.ts';
+import { run, type RunOptions, type RunOutcome } from '../run/runner.ts';
 import { claimRunnerOutput } from './run-output.ts';
 import { explore, STEP_BOUNDS, TIMEOUT_BOUNDS } from '../explore/index.ts';
 import { BUILTIN_REPORTERS, isBuiltinReporter } from '../report/builtin.ts';
@@ -254,7 +255,7 @@ type ListReporter = (typeof LIST_REPORTERS)[number];
 function formatListedPair(pair: ListedPair): string {
   const tags = pair.tags.map((tag) => ` #${bounded(tag)}`).join('');
   const line = `${pair.file} › ${pair.titlePath.map(bounded).join(' › ')} [${pair.target}]${tags}`;
-  return pair.disposition === 'skip' ? `${line} (skipped: ${pair.skipReason ?? 'skipped'})` : line;
+  return pair.disposition === 'skip' ? `${line} (skipped: ${pair.reason ?? 'skipped'})` : line;
 }
 
 /** The exit-code table of the CLI reference; the runner decides which one applies. */
@@ -543,6 +544,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
     .option('--repeat-each <n>', 'run every selected test this many times, each run its own result (pair with --no-cache to exercise the model each time)', parsePositiveInt)
     .option('--no-cache', 'run with the replay cache off, whatever the config says')
     .option('--strict-cache', 'fail a step whose recording no longer replays (REPLAY_STALE) instead of handing it to the agent; never writes the cache')
+    .option('-u, --update-snapshots', 'write the stored screenshots toHaveScreenshot finds missing or different, and pass')
     .optionsGroup('Output:')
     .option('--reporter <ids>', `comma-separated reporters: ${BUILTIN_REPORTERS.join(', ')}`, parseReporters)
     .option('--output <dir>', 'results directory: report, artifacts, sessions (default: output in the config, else .e2e)')
@@ -568,6 +570,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
           'e2e run --max-failures 3',
           'e2e run --repeat-each 5 --no-cache tests/checkout.e2e.ts',
           'CI=1 e2e run --strict-cache',
+          'e2e run --update-snapshots tests/home.e2e.ts',
           'e2e run --agent ux tests/onboarding.e2e.ts',
           'e2e run --agent buyer,admin tests/checkout.e2e.ts',
           'AI_GATEWAY_API_KEY=... e2e run --no-cache',
@@ -596,6 +599,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
           /** Commander negation: `--no-cache` parses as `cache: false`. */
           cache?: boolean;
           strictCache?: boolean;
+          updateSnapshots?: boolean;
           debug?: boolean;
           aiTrace?: boolean;
           trace?: RecordingMode | true;
@@ -622,6 +626,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
               output: options.output,
               noCache: options.cache === false,
               strictCache: options.strictCache,
+              updateSnapshots: options.updateSnapshots,
               debug: options.debug,
               aiTrace: options.aiTrace,
               trace: recordingOption(options.trace),
@@ -775,22 +780,24 @@ function createProgram(version: string, telemetry: Telemetry): Command {
         command: Command,
       ) => {
         rejectForwardedFlags(command, files);
-        let pairs: ListedPair[];
+        let pairs: readonly ListedPair[];
         try {
           ({ pairs } = await list({
             files,
-            configPath: options.config,
-            targetIds: options.target,
+            config: options.config,
+            targets: options.target,
             ...selectionRunOptions(options),
           }));
         } catch (cause) {
           reportFailure(telemetry, cause);
           return;
         }
+        // `list` includes pairs a filter removed. The command prints the ones `e2e list` always has: run and skip.
+        const listed = pairs.filter((pair) => pair.disposition === 'run' || pair.disposition === 'skip');
         process.stdout.write(
           options.reporter === 'json'
-            ? `${JSON.stringify({ pairs }, null, 2)}\n`
-            : pairs.map((pair) => `${formatListedPair(pair)}\n`).join(''),
+            ? `${JSON.stringify({ pairs: listed }, null, 2)}\n`
+            : listed.map((pair) => `${formatListedPair(pair)}\n`).join(''),
         );
         process.exitCode = 0;
       },
